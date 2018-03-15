@@ -9,6 +9,7 @@ from rally.task import context
 from rally.task import validation
 from rally import consts
 
+from rally_ovs.plugins.ovs import ovsclients
 
 LOG = logging.getLogger(__name__)
 
@@ -41,11 +42,24 @@ class Datapath(context.Context):
         "additionalProperties": False
     }
 
+    DEFAULT_CONFIG = {
+    }
+
+    RESOURCE_NAME_FORMAT = "lrouter_XXXXXX_XXXXXX"
+
     def setup(self):
         self._init_clients()
 
-        ovn_nbctl = self.controller_client()
+        ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
+
+        lrouters = []
+
+        name = self.generate_random_name()
+        lrouter = ovn_nbctl.lrouter_add(name)
+        lrouters.append(lrouter)
+
+        self.context["datapaths"] = { "lrouters": lrouters }
 
     def cleanup(self):
         pass
