@@ -1,0 +1,32 @@
+---
+  version: 2
+  title: Use datapath context to create lrouters
+  subtasks:
+    -
+      title: (Re)create controller sandbox
+      workloads:
+        -
+          name: OvnSandbox.create_controller
+          args:
+            controller_create_args: {}
+          runner:
+            type: "serial"
+            times: 1
+          context:
+            ovn_multihost:
+              controller: "ovn-controller-node"
+    -
+      title: Create switches linked to a router
+      workloads:
+        -
+          name: OvnNorthbound.create_routed_lswitches
+          args:
+            lswitch_create_args:
+              start_cidr: "10.0.0.0/24"
+          runner:
+            type: "serial"
+            times: 10
+          context:
+            ovn_multihost:
+              controller: "ovn-controller-node"
+            datapath: {}

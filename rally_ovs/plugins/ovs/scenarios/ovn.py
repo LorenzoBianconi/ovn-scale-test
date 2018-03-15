@@ -60,7 +60,8 @@ class OvnScenario(scenario.OvsScenario):
 
             lswitch = ovn_nbctl.lswitch_add(name)
             if start_cidr:
-                lswitch["cidr"] = start_cidr.next(i)
+                off = self.context["iteration"] * num_switches
+                lswitch["cidr"] = start_cidr.next(off + i)
 
             LOG.info("create %(name)s %(cidr)s" % \
                       {"name": name, "cidr": lswitch.get("cidr", "")})
@@ -287,6 +288,7 @@ class OvnScenario(scenario.OvsScenario):
                          ('address', 'router'))
         ovn_nbctl.flush()
 
+    @atomic.action_timer("ovn_network.connect_network_to_router")
     def _connect_networks_to_routers(self, lnetworks, lrouters, networks_per_router):
         j = 0
         for i in range(len(lrouters)):
@@ -412,8 +414,3 @@ class OvnScenario(scenario.OvsScenario):
 
         if wait_sync != "none":
             ovn_nbctl.sync(wait_sync)
-
-
-
-
-

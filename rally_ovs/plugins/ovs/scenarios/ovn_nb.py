@@ -27,6 +27,12 @@ class OvnNorthbound(ovn.OvnScenario):
         self._create_lswitches(lswitch_create_args)
         self._list_lswitches()
 
+    @scenario.configure()
+    def create_routed_lswitches(self, lswitch_create_args=None):
+        lrouters = self.context["datapaths"]["lrouters"]
+        lswitches = self._create_lswitches(lswitch_create_args)
+        networks_per_router = len(lswitches)
+        self._connect_networks_to_routers(lswitches, lrouters, networks_per_router)
 
     @scenario.configure(context={})
     def create_and_delete_lswitches(self, lswitch_create_args=None):
@@ -146,6 +152,3 @@ class OvnNorthbound(ovn.OvnScenario):
 
 
         self._delete_acl(lswitches)
-
-
-
