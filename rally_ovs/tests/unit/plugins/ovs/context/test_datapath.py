@@ -43,6 +43,14 @@ class DatapathTestCase(test.TestCase):
               Datapath.validate(config)
 
     def get_fake_context(self, **datapath_config):
+        fake_credential = {
+            "user": "fake_user",
+            "host": "fake_host",
+            "port": -1,
+            "key": "fake_key",
+            "password": "fake_password",
+        }
+
         return {
             "task": {
                 "uuid": "fake_task_uuid",
@@ -51,13 +59,13 @@ class DatapathTestCase(test.TestCase):
                 "controller": {
                     "fake-controller-node": {
                         "name": "fake-controller-node",
-                        "credential": {
-                            "user": "fake_user",
-                            "host": "fake_host",
-                            "port": -1,
-                            "key": "fake_key",
-                            "password": "fake_password",
-                        },
+                        "credential": fake_credential,
+                    },
+                },
+                "farms": {
+                    "fake-farm-node-0": {
+                        "name": "fake-farm-node-0",
+                        "credential": fake_credential,
                     },
                 },
                 "install_method": "fake_install_method",
@@ -68,7 +76,8 @@ class DatapathTestCase(test.TestCase):
         }
 
     def test_init_default(self):
-        Datapath({})
+        context = self.get_fake_context()
+        Datapath(context)
 
     @ddt.data({"router_create_args": {"amount": 1},
                "routers": [{"name": "lrouter_1"}]},
