@@ -69,6 +69,42 @@ class Clients(object):
         self.cache = {}
 
 
+class ClientsMixin(object):
+    """Mixin for objects that use OvsClient clients"""
+
+    def __init__(self, *args, **kwargs):
+        super(ClientsMixin, self).__init__(*args, **kwargs)
+
+        multihost_info = self.context["ovn_multihost"]
+
+        for k,v in six.iteritems(multihost_info["controller"]):
+            cred = v["credential"]
+            self._controller_clients = Clients(cred)
+
+        self._farm_clients = {}
+        for k,v in six.iteritems(multihost_info["farms"]):
+            cred = v["credential"]
+            self._farm_clients[k] = Clients(cred)
+
+        self.install_method = multihost_info["install_method"]
+
+    def __del__(self):
+        self.cleanup_clients()
+
+    def controller_client(self, client_type="ssh"):
+        client = getattr(self._controller_clients, client_type)
+        return client()
+
+    def farm_clients(self, name, client_type="ssh"):
+        clients = self._farm_clients[name]
+        client = getattr(clients, client_type)
+        return client()
+
+    def cleanup_clients(self):
+        self._controller_clients.clear()
+        for _, clients in six.iteritems(self._farm_clients):
+            clients.clear()
+
 
 '''
     lswitch 48732e5d-b018-4bad-a1b6-8dbc762f4126 (lswitch_c52f4c_xFG42O)
