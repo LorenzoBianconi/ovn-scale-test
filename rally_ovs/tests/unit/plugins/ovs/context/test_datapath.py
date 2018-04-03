@@ -17,6 +17,7 @@ import mock
 
 from jsonschema.exceptions import ValidationError
 from rally_ovs.plugins.ovs.context.datapath import Datapath
+from rally_ovs.tests.unit.plugins.ovs import utils
 from tests.unit import test
 
 @ddt.ddt
@@ -42,41 +43,8 @@ class DatapathTestCase(test.TestCase):
         with self.assertRaisesRegexp(ValidationError, ""): # Ignore message
               Datapath.validate(config)
 
-    def get_fake_context(self, **datapath_config):
-        fake_credential = {
-            "user": "fake_user",
-            "host": "fake_host",
-            "port": -1,
-            "key": "fake_key",
-            "password": "fake_password",
-        }
-
-        return {
-            "task": {
-                "uuid": "fake_task_uuid",
-            },
-            "ovn_multihost": {
-                "controller": {
-                    "fake-controller-node": {
-                        "name": "fake-controller-node",
-                        "credential": fake_credential,
-                    },
-                },
-                "farms": {
-                    "fake-farm-node-0": {
-                        "name": "fake-farm-node-0",
-                        "credential": fake_credential,
-                    },
-                },
-                "install_method": "fake_install_method",
-            },
-            "config": {
-                "datapath": datapath_config,
-            },
-        }
-
     def test_init_default(self):
-        context = self.get_fake_context()
+        context = utils.get_fake_context(datapath={})
         Datapath(context)
 
     @ddt.data({"router_create_args": {"amount": 1},
@@ -92,11 +60,15 @@ class DatapathTestCase(test.TestCase):
     @mock.patch("rally_ovs.plugins.ovs.ovsclients_impl.OvnNbctl.create_client")
     def test_add_only_routers(self, mock_create_client,
                               router_create_args, routers):
-        mock_ovnbctl = mock.MagicMock()
-        mock_ovnbctl.lrouter_add.side_effect = routers
-        mock_create_client.return_value = mock_ovnbctl
+        mock_client = mock_create_client.return_value
+        mock_client.lrouter_add.side_effect = routers
 
-        context = self.get_fake_context(router_create_args=router_create_args)
+        config = {
+            "datapath": {
+                "router_create_args": router_create_args,
+            },
+        }
+        context = utils.get_fake_context(**config)
         dp_context = Datapath(context)
         dp_context.setup()
 
