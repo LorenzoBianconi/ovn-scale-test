@@ -14,6 +14,7 @@
 
 
 from rally.common import utils
+
 from rally_ovs.plugins.ovs import ovsclients
 
 
@@ -42,7 +43,7 @@ class OvnClientMixin(ovsclients.ClientsMixin, utils.RandomNameGeneratorMixin):
                 ovn_nbctl.flush()
                 flush_count = batch
 
-        ovn_nbctl.flush() # ensure all commands be run
+        ovn_nbctl.flush()  # ensure all commands be run
         ovn_nbctl.enable_batch_mode(False)
 
         return lrouters

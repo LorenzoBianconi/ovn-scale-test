@@ -16,15 +16,11 @@
 # - Use constants for order?
 # - Require ovn_multihost context when common validators are available
 
-import six
-
+from rally import consts
 from rally.common import logging
 from rally.task import context
-from rally.task import validation
-from rally import consts
 
 from rally_ovs.plugins.ovs import ovnclients
-from rally_ovs.plugins.ovs import scenario
 
 
 LOG = logging.getLogger(__name__)
