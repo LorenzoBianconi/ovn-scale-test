@@ -37,14 +37,17 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
             "router_create_args": {
                 "type": "object",
                 "properties": {
-                    "amount": {
-                        "type": "integer",
-                        "minimum": 0,
-                    },
-                    "batch": {
-                        "type": "integer",
-                        "minimum": 1,
-                    }
+                    "amount": {"type": "integer", "minimum": 0},
+                    "batch": {"type": "integer", "minimum": 1},
+                },
+                "additionalProperties": False,
+            },
+            "lswitch_create_args": {
+                "type": "object",
+                "properties": {
+                    "amount": {"type": "integer", "minimum": 0},
+                    "batch": {"type": "integer", "minimum": 1},
+                    "start_cidr": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -55,6 +58,7 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
 
     DEFAULT_CONFIG = {
         "router_create_args": {"amount": 0},
+        "lswitch_create_args": {"amount": 0},
         "cleanup": True,
     }
 
@@ -62,9 +66,14 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
         super(Datapath, self).setup()
 
         router_create_args = self.config["router_create_args"]
+        lswitch_create_args = self.config["lswitch_create_args"]
+
         routers = self.create_routers(router_create_args)
+        lswitches = self.create_lswitches(lswitch_create_args)
+
         self.context["datapaths"] = {
             "routers": routers,
+            "lswitches": lswitches,
         }
 
     def cleanup(self):
