@@ -37,6 +37,8 @@ class OvnNorthboundContext(ovsclients.ClientsMixin, context.Context):
 
     @logging.log_task_wrapper(LOG.info, _("Enter context: `ovn_nb`"))
     def setup(self):
+        super(OvnNorthboundContext, self).setup()
+
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
         lswitches = ovn_nbctl.show()

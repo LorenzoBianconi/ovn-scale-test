@@ -17,6 +17,7 @@ import collections
 import six
 
 from rally.common.plugin import plugin
+from rally.task import scenario
 from utils import py_to_val
 
 _NAMESPACE = "ovs"
@@ -75,6 +76,14 @@ class ClientsMixin(object):
     def __init__(self, *args, **kwargs):
         super(ClientsMixin, self).__init__(*args, **kwargs)
 
+        self._controller_clients = None
+        self._farm_clients = {}
+
+        # We are a Scenario, context has been already set up. Use it.
+        if isinstance(self, scenario.Scenario):
+            self.setup()
+
+    def setup(self):
         multihost_info = self.context["ovn_multihost"]
 
         for k,v in six.iteritems(multihost_info["controller"]):
@@ -101,7 +110,8 @@ class ClientsMixin(object):
         return client()
 
     def cleanup_clients(self):
-        self._controller_clients.clear()
+        if self._controller_clients:
+            self._controller_clients.clear()
         for _, clients in six.iteritems(self._farm_clients):
             clients.clear()
 

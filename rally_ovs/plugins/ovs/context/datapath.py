@@ -59,6 +59,8 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
     }
 
     def setup(self):
+        super(Datapath, self).setup()
+
         router_create_args = self.config["router_create_args"]
         routers = self.create_routers(router_create_args)
         self.context["datapaths"] = {
