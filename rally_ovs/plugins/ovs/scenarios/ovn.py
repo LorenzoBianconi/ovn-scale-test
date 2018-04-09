@@ -15,10 +15,9 @@
 from rally_ovs.plugins.ovs import scenario
 from rally.task import atomic
 from rally.common import logging
-from rally.common import utils
 from rally import exceptions
 from rally_ovs.plugins.ovs import ovnclients
-from rally_ovs.plugins.ovs.utils import get_random_mac
+from rally_ovs.plugins.ovs import utils
 import random
 import netaddr
 
