@@ -33,9 +33,8 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
     '''
     @atomic.action_timer("ovn.create_lswitch")
     def _create_lswitches(self, lswitch_create_args, num_switches=-1):
-
         print("create lswitch")
-        return self.create_lswitches(lswitch_create_args, num_switches)
+        return super(OvnScenario, self)._create_lswitches(lswitch_create_args, num_switches)
 
     @atomic.optional_action_timer("ovn.list_lswitch")
     def _list_lswitches(self):

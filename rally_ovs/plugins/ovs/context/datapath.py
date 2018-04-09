@@ -69,7 +69,7 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
         lswitch_create_args = self.config["lswitch_create_args"]
 
         routers = self._create_routers(router_create_args)
-        lswitches = self.create_lswitches(lswitch_create_args)
+        lswitches = self._create_lswitches(lswitch_create_args)
 
         self.context["datapaths"] = {
             "routers": routers,

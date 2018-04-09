@@ -26,7 +26,7 @@ LOG = logging.getLogger(__name__)
 
 class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
 
-    def create_lswitches(self, lswitch_create_args, num_switches=-1):
+    def _create_lswitches(self, lswitch_create_args, num_switches=-1):
         self.RESOURCE_NAME_FORMAT = "lswitch_XXXXXX_XXXXXX"
 
         if (num_switches == -1):
