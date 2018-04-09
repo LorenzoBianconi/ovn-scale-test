@@ -194,7 +194,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
     @atomic.action_timer("ovn_network.create_routers")
     def _create_routers(self, router_create_args):
         LOG.info("Create Logical routers")
-        self.create_routers(router_create_args)
+        return self.create_lrouters(router_create_args)
 
 
     def _connect_network_to_router(self, router, network):

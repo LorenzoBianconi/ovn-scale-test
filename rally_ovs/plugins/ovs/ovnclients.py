@@ -63,7 +63,7 @@ class OvnClientMixin(ovsclients.ClientsMixin, utils.RandomNameGeneratorMixin):
         ovn_nbctl.enable_batch_mode(False)
         return lswitches
 
-    def create_routers(self, router_create_args):
+    def create_lrouters(self, router_create_args):
         self.RESOURCE_NAME_FORMAT = "lrouter_XXXXXX_XXXXXX"
 
         amount = router_create_args.get("amount", 1)
