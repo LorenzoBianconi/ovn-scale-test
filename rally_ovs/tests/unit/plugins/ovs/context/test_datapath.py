@@ -13,6 +13,7 @@
 # under the License.
 
 import ddt
+import itertools
 import mock
 import netaddr
 
@@ -20,6 +21,13 @@ from jsonschema.exceptions import ValidationError
 from rally_ovs.plugins.ovs.context.datapath import Datapath
 from rally_ovs.tests.unit.plugins.ovs import utils
 from tests.unit import test
+
+
+def gen_datapath_name(prefix, start=1):
+    n = itertools.count(start)
+    while True:
+        yield {"name": prefix + str(next(n))}
+
 
 @ddt.ddt
 class DatapathTestCase(test.TestCase):
@@ -49,32 +57,48 @@ class DatapathTestCase(test.TestCase):
         dp_context = Datapath(context)
         dp_context.setup()
 
-    @ddt.data({"router_create_args": {"amount": 1},
-               "routers": [{"name": "lrouter_1"}]},
-              {"router_create_args": {"amount": 2},
-               "routers": [{"name", "lrouter_1"},
-                           {"name": "lrouter_2"}]},
-              {"router_create_args": {"amount": 3},
-               "routers": [{"name": "lrouter_1"},
-                           {"name": "lrouter_2"},
-                           {"name": "lrouter_3"}]})
+    @ddt.data({
+        "config": {
+            "router_create_args": {"amount": 1},
+        },
+        "datapaths": {
+            "routers": [
+                {"name": "lrouter_1"},
+            ],
+        },
+    },{
+        "config": {
+            "router_create_args": {"amount": 2},
+        },
+        "datapaths": {
+            "routers": [
+                {"name": "lrouter_1"},
+                {"name": "lrouter_2"},
+            ],
+        },
+    },{
+        "config": {
+            "router_create_args": {"amount": 3},
+        },
+        "datapaths": {
+            "routers": [
+                {"name": "lrouter_1"},
+                {"name": "lrouter_2"},
+                {"name": "lrouter_3"},
+            ],
+        },
+    })
     @ddt.unpack
     @mock.patch("rally_ovs.plugins.ovs.ovsclients_impl.OvnNbctl.create_client")
-    def test_add_only_routers(self, mock_create_client,
-                              router_create_args, routers):
+    def test_only_routers(self, mock_create_client, config, datapaths):
         mock_client = mock_create_client.return_value
-        mock_client.lrouter_add.side_effect = routers
+        mock_client.lrouter_add.side_effect = gen_datapath_name("lrouter_")
 
-        config = {
-            "datapath": {
-                "router_create_args": router_create_args,
-            },
-        }
-        context = utils.get_fake_context(**config)
+        context = utils.get_fake_context(datapath=config)
         dp_context = Datapath(context)
         dp_context.setup()
 
-        expected_routers = routers
+        expected_routers = datapaths["routers"]
         actual_routers = dp_context.context["datapaths"]["routers"]
         self.assertSequenceEqual(sorted(expected_routers),
                                  sorted(actual_routers))
