@@ -103,48 +103,101 @@ class DatapathTestCase(test.TestCase):
         self.assertSequenceEqual(sorted(expected_routers),
                                  sorted(actual_routers))
 
-    @ddt.data({"lswitch_create_args": {"amount": 1,
-                                       "start_cidr": "10.1.0.0/16"},
-               "lswitches": [
-                   {"name": "lswitch_1",
-                    "cidr": netaddr.IPNetwork("10.1.0.0/16")},
-               ]},
-              {"lswitch_create_args": {"amount": 2,
-                                       "start_cidr": "10.1.0.0/16"},
-               "lswitches": [
-                   {"name": "lswitch_1",
-                    "cidr": netaddr.IPNetwork("10.1.0.0/16")},
-                   {"name": "lswitch_2",
-                    "cidr": netaddr.IPNetwork("10.2.0.0/16")},
-               ]},
-              {"lswitch_create_args": {"amount": 3,
-                                       "start_cidr": "10.1.0.0/16"},
-               "lswitches": [
-                   {"name": "lswitch_1",
-                    "cidr": netaddr.IPNetwork("10.1.0.0/16")},
-                   {"name": "lswitch_2",
-                    "cidr": netaddr.IPNetwork("10.2.0.0/16")},
-                   {"name": "lswitch_3",
-                    "cidr": netaddr.IPNetwork("10.3.0.0/16")},
-               ]},
-    )
+    @ddt.data({
+        "config": {
+            "lswitch_create_args": {"amount": 1, "start_cidr": "10.1.0.0/16"},
+        },
+        "datapaths": {
+            "lswitches": [
+                {"name": "lswitch_1", "cidr": netaddr.IPNetwork("10.1.0.0/16")},
+            ],
+        },
+    },{
+        "config": {
+            "lswitch_create_args": {"amount": 2, "start_cidr": "10.1.0.0/16"},
+        },
+        "datapaths": {
+            "lswitches": [
+                {"name": "lswitch_1", "cidr": netaddr.IPNetwork("10.1.0.0/16")},
+                {"name": "lswitch_2", "cidr": netaddr.IPNetwork("10.2.0.0/16")},
+            ],
+        },
+    },{
+        "config": {
+            "lswitch_create_args": {"amount": 3, "start_cidr": "10.1.0.0/16"},
+        },
+        "datapaths": {
+            "lswitches": [
+                {"name": "lswitch_1", "cidr": netaddr.IPNetwork("10.1.0.0/16")},
+                {"name": "lswitch_2", "cidr": netaddr.IPNetwork("10.2.0.0/16")},
+                {"name": "lswitch_3", "cidr": netaddr.IPNetwork("10.3.0.0/16")},
+            ],
+        },
+    })
     @ddt.unpack
     @mock.patch("rally_ovs.plugins.ovs.ovsclients_impl.OvnNbctl.create_client")
-    def test_add_only_lswitches(self, mock_create_client,
-                                lswitch_create_args, lswitches):
+    def test_only_lswitches(self, mock_create_client, config, datapaths):
         mock_client = mock_create_client.return_value
-        mock_client.lswitch_add.side_effect = [{"name": ls["name"]} for ls in lswitches]
+        mock_client.lswitch_add.side_effect = gen_datapath_name("lswitch_")
 
-        config = {
-            "datapath": {
-                "lswitch_create_args": lswitch_create_args,
-            },
-        }
-        context = utils.get_fake_context(**config)
+        context = utils.get_fake_context(datapath=config)
         dp_context = Datapath(context)
         dp_context.setup()
 
-        expected_lswitches = lswitches
+        expected_lswitches = datapaths["lswitches"]
+        actual_lswitches = dp_context.context["datapaths"]["lswitches"]
+        self.assertSequenceEqual(sorted(expected_lswitches),
+                                 sorted(actual_lswitches))
+
+
+    @ddt.data({
+        "config": {
+            "router_create_args": {"amount": 1},
+            "lswitch_create_args": {"amount": 1, "start_cidr": "10.0.0.0/16"},
+        },
+        "datapaths": {
+            "routers": [
+                {"name": "lrouter_1"},
+            ],
+            "lswitches": [
+                {"name": "lswitch_1", "cidr": netaddr.IPNetwork("10.0.0.0/16")},
+            ],
+        }
+    },{
+        "config": {
+            "router_create_args": {"amount": 2},
+            "lswitch_create_args": {"amount": 4, "start_cidr": "10.0.0.0/16"},
+        },
+        "datapaths": {
+            "routers": [
+                {"name": "lrouter_1"},
+                {"name": "lrouter_2"},
+            ],
+            "lswitches": [
+                {"name": "lswitch_1", "cidr": netaddr.IPNetwork("10.0.0.0/16")},
+                {"name": "lswitch_2", "cidr": netaddr.IPNetwork("10.1.0.0/16")},
+                {"name": "lswitch_3", "cidr": netaddr.IPNetwork("10.2.0.0/16")},
+                {"name": "lswitch_4", "cidr": netaddr.IPNetwork("10.3.0.0/16")},
+            ],
+        },
+    })
+    @ddt.unpack
+    @mock.patch("rally_ovs.plugins.ovs.ovsclients_impl.OvnNbctl.create_client")
+    def test_lswitches_and_routers(self, mock_create_client, config, datapaths):
+        mock_client = mock_create_client.return_value
+        mock_client.lrouter_add.side_effect = gen_datapath_name("lrouter_")
+        mock_client.lswitch_add.side_effect = gen_datapath_name("lswitch_")
+
+        context = utils.get_fake_context(datapath=config)
+        dp_context = Datapath(context)
+        dp_context.setup()
+
+        expected_routers = datapaths["routers"]
+        actual_routers = dp_context.context["datapaths"]["routers"]
+        self.assertSequenceEqual(sorted(expected_routers),
+                                 sorted(actual_routers))
+
+        expected_lswitches = datapaths["lswitches"]
         actual_lswitches = dp_context.context["datapaths"]["lswitches"]
         self.assertSequenceEqual(sorted(expected_lswitches),
                                  sorted(actual_lswitches))
