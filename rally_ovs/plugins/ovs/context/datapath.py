@@ -51,6 +51,7 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
                 },
                 "additionalProperties": False,
             },
+            "networks_per_router": {"type": "integer", "minimum": 0},
             "cleanup": {"type": "boolean"},
         },
         "additionalProperties": False,
@@ -59,6 +60,7 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
     DEFAULT_CONFIG = {
         "router_create_args": {"amount": 0},
         "lswitch_create_args": {"amount": 0},
+        "networks_per_router": 0,
         "cleanup": True,
     }
 
@@ -67,9 +69,12 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
 
         router_create_args = self.config["router_create_args"]
         lswitch_create_args = self.config["lswitch_create_args"]
+        networks_per_router = self.config["networks_per_router"]
 
         routers = self._create_routers(router_create_args)
         lswitches = self._create_lswitches(lswitch_create_args)
+        if networks_per_router:
+            self._connect_networks_to_routers(lswitches, routers, networks_per_router)
 
         self.context["datapaths"] = {
             "routers": routers,
