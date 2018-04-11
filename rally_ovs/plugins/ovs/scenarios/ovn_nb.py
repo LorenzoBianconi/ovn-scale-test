@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-
+import netaddr
 
 from rally_ovs.plugins.ovs.scenarios import ovn
 
@@ -27,6 +27,44 @@ class OvnNorthbound(ovn.OvnScenario):
         self._create_lswitches(lswitch_create_args)
         self._list_lswitches()
 
+
+    @scenario.configure()
+    def create_routed_lport(self, lport_create_args=None, port_bind_args=None):
+        lswitches = self.context["datapaths"]["lswitches"]
+
+        iteration = self.context["iteration"]
+        index = iteration % len(lswitches)
+        lswitch = lswitches[index]
+        lports = self._create_lports(lswitch, lport_create_args)
+        val = iplist = netaddr.IPNetwork('0.0.0.0')
+
+        # create two acl for each logical port
+        # prio 1000: allow inter project traffic
+        # prio 900: deny all
+        cidr = str(lswitch["cidr"])
+        if cidr:
+            iplist = netaddr.IPNetwork(cidr)
+            val = iplist.ip
+            val.value = val.value + 1
+
+        if (iteration < len(lswitches)):
+            if cidr:
+                self._create_address_set("addrset%d" % iteration, "%s" % str(val))
+            match = "ip4.src == $addrset%d" % iteration
+        else:
+            if cidr:
+                ip0 = str(val)
+                val.value = val.value + 1
+                ip1 = str(val)
+                self._modify_address_set("addrset%d" % (iteration % len(lswitches)), "%s %s" % (ip0, ip1))
+            match = "ip4.src == $addrset%d" % (iteration % len(lswitches))
+        acl_create_args = { "match" : match }
+        self._create_acl(lswitch, lports, acl_create_args, 1)
+        acl_create_args = { "priority" : 900, "action" : "drop", "match" : "" }
+        self._create_acl(lswitch, lports, acl_create_args, 1)
+
+        sandboxes = self.context["sandboxes"]
+        self._bind_ports(lports, sandboxes, port_bind_args)
 
     @scenario.configure(context={})
     def create_and_delete_lswitches(self, lswitch_create_args=None):
