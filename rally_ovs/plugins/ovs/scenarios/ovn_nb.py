@@ -110,6 +110,7 @@ class OvnNorthbound(ovn.OvnScenario):
         lswitches = self.get_or_create_lswitch_and_lport(lswitch_create_args,
                                     lport_create_args, lports_per_lswitch)
 
+        acl_create_args["match": "ip4 && udp"]
         for lswitch in lswitches:
             self._create_acl(lswitch, lswitch["lports"],
                              acl_create_args, acls_per_port)
@@ -140,6 +141,7 @@ class OvnNorthbound(ovn.OvnScenario):
                                     lport_create_args, lports_per_lswitch)
 
 
+        acl_create_args["match": "ip4 && udp"]
         for lswitch in lswitches:
             self._create_acl(lswitch, lswitch["lports"],
                              acl_create_args, acls_per_port)
