@@ -336,3 +336,36 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
             "chart_plugin": "StackedArea", "data": oflow_data
         }
         self.add_output(additive_oflow_data)
+
+    def _create_address_set(self, set_name, address_list):
+        LOG.info("create %s address_set [%s]" % (set_name, address_list))
+
+        name = "name=\"" + set_name + "\""
+        addr_list="addresses=\"" + address_list + "\""
+
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
+        ovn_nbctl.enable_batch_mode()
+        ovn_nbctl.address_set_create(name, addr_list)
+        ovn_nbctl.flush()
+
+    def _modify_address_set(self, set_name, address_list):
+        LOG.info("modify %s address_set [%s]" % (set_name, address_list))
+
+        name = "\"" + set_name + "\""
+        addr_list="addresses=\"" + address_list + "\""
+
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
+        ovn_nbctl.enable_batch_mode()
+        ovn_nbctl.address_set_modify(name, addr_list)
+        ovn_nbctl.flush()
+
+    def _remove_address_set(self, set_name):
+        LOG.info("remove %s address_set" % set_name)
+
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
+        ovn_nbctl.enable_batch_mode()
+        ovn_nbctl.address_set_remove(set_name)
+        ovn_nbctl.flush()

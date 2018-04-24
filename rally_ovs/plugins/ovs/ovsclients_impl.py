@@ -209,6 +209,18 @@ class OvnNbctl(OvsClient):
             self.run("sync", opts)
             self.batch_mode = batch_mode
 
+        def address_set_create(self, name, address_set):
+            params = [name, address_set]
+            self.run("create Address_Set", args=params)
+
+        def address_set_modify(self, name, address_set):
+            params = [name, address_set]
+            self.run("set Address_Set", args=params)
+
+        def address_set_remove(self, name):
+            params = [name]
+            self.run("destroy Address_Set", args=params)
+
     def create_client(self):
         print "*********   call OvnNbctl.create_client"
 
