@@ -355,24 +355,22 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         LOG.info("create %s address_set [%s]" % (set_name, address_list))
 
         name = "name=\"" + set_name + "\""
-        addr_list="addresses=\"" + address_list + "\""
+        addr_list="\"" + address_list + "\""
 
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
-        ovn_nbctl.enable_batch_mode()
-        ovn_nbctl.address_set_create(name, addr_list)
+        ovn_nbctl.create("Address_Set", name, ('addresses', addr_list))
         ovn_nbctl.flush()
 
     def _modify_address_set(self, set_name, address_list):
         LOG.info("modify %s address_set [%s]" % (set_name, address_list))
 
         name = "\"" + set_name + "\""
-        addr_list="addresses=\"" + address_list + "\""
+        addr_list="\"" + address_list + "\""
 
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
-        ovn_nbctl.enable_batch_mode()
-        ovn_nbctl.address_set_modify(name, addr_list)
+        ovn_nbctl.add("Address_Set", name, ('addresses', ' ', addr_list))
         ovn_nbctl.flush()
 
     def _remove_address_set(self, set_name):
@@ -380,6 +378,5 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
 
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
-        ovn_nbctl.enable_batch_mode()
-        ovn_nbctl.address_set_remove(set_name)
+        ovn_nbctl.destroy("Address_Set", set_name)
         ovn_nbctl.flush()
