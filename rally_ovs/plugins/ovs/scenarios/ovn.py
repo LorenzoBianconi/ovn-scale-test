@@ -146,6 +146,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         direction = acl_create_args.get("direction", "to-lport")
         priority = acl_create_args.get("priority", 1000)
         action = acl_create_args.get("action", "allow")
+        extra_match_val = acl_create_args.get("match", "")
 
         if direction == "from-lport":
             p = "inport"
@@ -156,11 +157,11 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
         ovn_nbctl.enable_batch_mode()
         for lport in lports:
+            match = '%s == "%s"' % (p, lport["name"])
+            if extra_match_val:
+                match += " && %s" % extra_match_val
             for i in range(acls_per_port):
-                match = '%s == "%s" && ip4 && udp && udp.src == %d' % \
-                        (p, lport["name"], 100 + i)
                 ovn_nbctl.acl_add(sw, direction, priority, match, action)
-
             ovn_nbctl.flush()
 
 
@@ -337,3 +338,36 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
             "chart_plugin": "StackedArea", "data": oflow_data
         }
         self.add_output(additive_oflow_data)
+
+    def _create_address_set(self, set_name, address_list):
+        LOG.info("create %s address_set [%s]" % (set_name, address_list))
+
+        name = "name=\"" + set_name + "\""
+        addr_list="addresses=\"" + address_list + "\""
+
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
+        ovn_nbctl.enable_batch_mode()
+        ovn_nbctl.address_set_create(name, addr_list)
+        ovn_nbctl.flush()
+
+    def _modify_address_set(self, set_name, address_list):
+        LOG.info("modify %s address_set [%s]" % (set_name, address_list))
+
+        name = "\"" + set_name + "\""
+        addr_list="addresses=\"" + address_list + "\""
+
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
+        ovn_nbctl.enable_batch_mode()
+        ovn_nbctl.address_set_modify(name, addr_list)
+        ovn_nbctl.flush()
+
+    def _remove_address_set(self, set_name):
+        LOG.info("remove %s address_set" % set_name)
+
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
+        ovn_nbctl.enable_batch_mode()
+        ovn_nbctl.address_set_remove(set_name)
+        ovn_nbctl.flush()
