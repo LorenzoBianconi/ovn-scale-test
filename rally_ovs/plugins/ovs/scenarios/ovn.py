@@ -146,8 +146,19 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         direction = acl_create_args.get("direction", "to-lport")
         priority = acl_create_args.get("priority", 1000)
         action = acl_create_args.get("action", "allow")
-        extra_match_val = acl_create_args.get("match", "")
+        address_set = acl_create_args.get("address_set", "")
 
+        '''
+        match template: {
+            "direction" : "<inport/outport>",
+            "lport" : "<swicth port>",
+            "address_set" : "<address_set id>"
+            "l4_port" : "<l4 port number>",
+        }
+        '''
+        match_template = acl_create_args.get("match",
+                                             "%(direction)s == %(lport)s && \
+                                             ip4 && udp && udp.src == %(l4_port)s")
         if direction == "from-lport":
             p = "inport"
         else:
@@ -157,10 +168,11 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
         ovn_nbctl.enable_batch_mode()
         for lport in lports:
-            match = '%s == "%s"' % (p, lport["name"])
-            if extra_match_val:
-                match += " && %s" % extra_match_val
             for i in range(acls_per_port):
+                match = match_template % { 'direction' : p,
+                                           'lport' : lport["name"],
+                                           'address_set' : address_set,
+                                           'l4_port' : 100 + i }
                 ovn_nbctl.acl_add(sw, direction, priority, match, action)
             ovn_nbctl.flush()
 
