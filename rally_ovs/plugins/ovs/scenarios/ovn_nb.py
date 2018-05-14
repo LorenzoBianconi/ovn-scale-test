@@ -33,34 +33,30 @@ class OvnNorthbound(ovn.OvnScenario):
         lswitches = self.context["datapaths"]["lswitches"]
 
         iteration = self.context["iteration"]
-        index = iteration % len(lswitches)
-        lswitch = lswitches[index]
-        lports = self._create_lports(lswitch, lport_create_args)
-        val = iplist = netaddr.IPNetwork('0.0.0.0')
+        lswitch = lswitches[iteration % len(lswitches)]
+        ip_start_index = iteration / len(lswitches) + 1
+        lports = self._create_lports(lswitch, lport_create_args,
+                                     lport_ip_shift=ip_start_index)
 
-        # create two acl for each logical port
-        # prio 1000: allow inter project traffic
-        # prio 900: deny all
-        cidr = str(lswitch["cidr"])
-        if cidr:
-            iplist = netaddr.IPNetwork(cidr)
-            val = iplist.ip
-            val.value = val.value + 1
+        addr_set_index = iteration / 2
 
-        if (iteration < len(lswitches)):
-            if cidr:
-                self._create_address_set("addrset%d" % iteration, "%s" % str(val))
-            match = "ip4.src == $addrset%d" % iteration
-        else:
-            if cidr:
-                ip0 = str(val)
-                val.value = val.value + 1
-                ip1 = str(val)
-                self._modify_address_set("addrset%d" % (iteration % len(lswitches)), "%s %s" % (ip0, ip1))
-            match = "ip4.src == $addrset%d" % (iteration % len(lswitches))
-        acl_create_args = { "match" : match }
+        """
+        create two acl for each logical port
+        prio 1000: allow inter project traffic
+        prio 900: deny all
+        """
+        match = "%(direction)s == %(lport)s && ip4.src == %(address_set)s"
+        network_cidr = lswitch.get("cidr", None)
+        if network_cidr:
+            ip_list = netaddr.IPNetwork(network_cidr.ip + ip_start_index).iter_hosts()
+            if ((iteration % 2) == 0):
+                self._create_address_set("addrset%d" % addr_set_index, "%s" % str(ip_list.next()))
+            else:
+                self._modify_address_set("addrset%d" % addr_set_index, "%s" % str(ip_list.next()))
+
+        acl_create_args = { "match" : match, "address_set" : ("$addrset%d" % addr_set_index) }
         self._create_acl(lswitch, lports, acl_create_args, 1)
-        acl_create_args = { "priority" : 900, "action" : "drop", "match" : "" }
+        acl_create_args = { "priority" : 900, "action" : "drop", "match" : "%(direction)s == %(lport)s" }
         self._create_acl(lswitch, lports, acl_create_args, 1)
 
         sandboxes = self.context["sandboxes"]
