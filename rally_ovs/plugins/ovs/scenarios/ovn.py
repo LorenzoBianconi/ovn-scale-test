@@ -121,9 +121,11 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         flush_count = batch
         lports = []
         for i in range(lport_amount):
-            name = self.generate_random_name()
-            ip_addr = ip_addrs.next()
-            ip = str(ip_addr) if ip_addrs else ""
+            ip = str(ip_addrs.next()) if ip_addrs else ""
+            if len(ip):
+                name = "lport_%s" % ip
+            else:
+                name = self.generate_random_name()
             mac = utils.get_random_mac(base_mac)
             ip_mask = '{}/{}'.format(ip, network_cidr.prefixlen)
             lport = ovn_nbctl.lswitch_port_add(lswitch["name"], name, mac,
