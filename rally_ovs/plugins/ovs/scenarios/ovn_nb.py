@@ -20,6 +20,7 @@ import copy
 from rally_ovs.plugins.ovs.scenarios import ovn
 
 from rally.task import scenario
+from rally.task import atomic
 from rally.task import validation
 
 class OvnNorthbound(ovn.OvnScenario):
@@ -53,6 +54,68 @@ class OvnNorthbound(ovn.OvnScenario):
         sandbox = sandboxes[iteration % len(sandboxes)]
         lport = self._create_lports(lswitches[0], lport_create_args)
         self._bind_ports_and_wait(lport, [sandbox], port_bind_args)
+
+    @atomic.action_timer("ovn.create_or_update_address_set")
+    def create_or_update_address_set(self, name, ipaddr, create = True):
+        if (create):
+            self._create_address_set(name, ipaddr)
+        else:
+            self._address_set_add_addrs(name, ipaddr)
+
+    @atomic.action_timer("ovn.create_port_acls")
+    def create_port_acls(self, lswitch, lports, addr_set):
+        """
+        create two acl for each logical port
+        prio 1000: allow inter project traffic
+        prio 900: deny all
+        """
+        match = "%(direction)s == %(lport)s && ip4.src == %(address_set)s"
+        acl_create_args = { "match" : match, "address_set" : addr_set }
+        self._create_acl(lswitch, lports, acl_create_args, 1,
+                         atomic_action = False)
+        acl_create_args = { "priority" : 900, "action" : "drop", "match" : "%(direction)s == %(lport)s" }
+        self._create_acl(lswitch, lports, acl_create_args, 1,
+                         atomic_action = False)
+
+    def create_lport_acl_addrset(self, lswitch, lport_create_args, port_bind_args,
+                                 ip_start_index = 0, addr_set_index = 0,
+                                 create_addr_set = True, create_acls = True):
+        lports = self._create_lports(lswitch, lport_create_args,
+                                     lport_ip_shift = ip_start_index)
+
+        if create_acls:
+            network_cidr = lswitch.get("cidr", None)
+            if network_cidr:
+                ip_list = netaddr.IPNetwork(network_cidr.ip + ip_start_index).iter_hosts()
+                ipaddr = str(next(ip_list))
+            else:
+                ipaddr = ""
+            self.create_or_update_address_set("addrset%d" % addr_set_index,
+                                              ipaddr, create_addr_set)
+
+            self.create_port_acls(lswitch, lports,
+                                  "$addrset%d" % addr_set_index)
+
+        sandboxes = self.context["sandboxes"]
+        sandbox = sandboxes[self.context["iteration"] % len(sandboxes)]
+        self._bind_ports_and_wait(lports, [sandbox], port_bind_args)
+
+    @scenario.configure()
+    def create_routed_lport(self, lport_create_args = None,
+                            port_bind_args = None,
+                            create_acls = True):
+        lswitches = self.context["ovn-nb"]
+        ip_offset = lport_create_args.get("ip_offset", 1) if lport_create_args else 1
+
+        iteration = self.context["iteration"]
+        lswitch = lswitches[iteration % len(lswitches)]
+        addr_set_index = iteration / 2
+        ip_start_index = iteration / len(lswitches) + ip_offset
+
+        self.create_lport_acl_addrset(lswitch, lport_create_args,
+                                      port_bind_args, ip_start_index,
+                                      addr_set_index, (iteration % 2) == 0,
+                                      create_acls)
 
     @scenario.configure(context={})
     def cleanup_routed_lswitches(self):
