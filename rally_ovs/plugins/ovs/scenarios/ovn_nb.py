@@ -76,12 +76,14 @@ class OvnNorthbound(ovn.OvnScenario):
                             port_bind_args = None,
                             create_acls = True):
         lswitches = self.context["datapaths"]["lswitches"]
+        daemon = self.context["datapaths"]["nbctl_daemon_mode"]
 
         iteration = self.context["iteration"]
         lswitch = lswitches[iteration % len(lswitches)]
         addr_set_index = iteration / 2
         ip_start_index = iteration / len(lswitches) + 1
 
+        self._set_daemon_mode(daemon)
         self.create_lport_acl_addrset(lswitch, lport_create_args,
                                       port_bind_args, ip_start_index,
                                       addr_set_index, (iteration % 2) == 0,
@@ -107,9 +109,12 @@ class OvnNorthbound(ovn.OvnScenario):
         prefix_len = test_args.get("prefixlen", 24)
 
         iteration = self.context["iteration"]
-        lswitches = self.context["ovn-nb"]
+        lswitches = self.context["ovn_nb"]["lswitches"]
+        daemon = self.context["ovn_nb"]["nbctl_daemon_mode"]
 
         addr_set_index = iteration % naddress_set
+
+        self._set_daemon_mode(daemon)
 
         if random.randint(0, 1):
             #add a port

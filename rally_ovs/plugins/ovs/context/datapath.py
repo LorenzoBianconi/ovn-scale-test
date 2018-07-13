@@ -56,6 +56,7 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
                 "additionalProperties": False,
             },
             "networks_per_router": {"type": "integer", "minimum": 0},
+            "nbctl_daemon_mode": {"type": "boolean"},
         },
         "additionalProperties": False,
     }
@@ -64,6 +65,7 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
         "router_create_args": {"amount": 0},
         "lswitch_create_args": {"amount": 0},
         "networks_per_router": 0,
+        "nbctl_daemon_mode": False,
     }
 
     def setup(self):
@@ -72,6 +74,11 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
         router_create_args = self.config["router_create_args"]
         lswitch_create_args = self.config["lswitch_create_args"]
         networks_per_router = self.config["networks_per_router"]
+
+        nbctl_daemon_mode = self.config["nbctl_daemon_mode"]
+        if nbctl_daemon_mode:
+            self._run_daemon()
+            self._set_daemon_mode(True)
 
         routers = []
         if router_create_args["amount"]:
@@ -88,6 +95,7 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
         self.context["datapaths"] = {
             "routers": routers,
             "lswitches": lswitches,
+            "nbctl_daemon_mode": nbctl_daemon_mode,
         }
 
     def cleanup(self):
