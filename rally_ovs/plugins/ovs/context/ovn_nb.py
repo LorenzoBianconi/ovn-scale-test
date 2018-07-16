@@ -52,7 +52,7 @@ class OvnNorthboundContext(ovnclients.OvnClientMixin, context.Context):
         lswitches = ovn_nbctl.show()
 
         self.context["ovn_nb"] = {
-            "nbctl_daemon_mode": = nbctl_daemon_mode,
+            "nbctl_daemon_mode": nbctl_daemon_mode,
             "lswitches": lswitches,
         }
 
