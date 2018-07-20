@@ -52,7 +52,8 @@ class OvnNbctl(OvsClient):
             self.sandbox = sandbox
             self.install_method = install_method
 
-        def run(self, cmd, opts=[], args=[], stdout=sys.stdout, stderr=sys.stderr):
+        def run(self, cmd, opts=[], args=[], stdout=sys.stdout,
+                stderr=sys.stderr, quit_on_error=True):
             self.cmds = self.cmds or []
 
             if self.daemon:
@@ -76,7 +77,7 @@ class OvnNbctl(OvsClient):
                 self.cmds.append(" ".join(cmd))
 
             self.ssh.run("\n".join(self.cmds),
-                         stdout=stdout, stderr=stderr)
+                         stdout=stdout, stderr=stderr, raise_on_error=quit_on_error)
 
             self.cmds = None
 
@@ -233,7 +234,7 @@ class OvnNbctl(OvsClient):
         def run_daemon(self, val = True):
             if val:
                 opts = ["--detach",  "--pidfile"]
-                self.run("", opts=opts)
+                self.run("", opts=opts, quit_on_error=False)
             else:
                 self.run("exit")
 
