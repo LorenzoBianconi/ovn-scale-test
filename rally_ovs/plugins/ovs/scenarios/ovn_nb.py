@@ -76,7 +76,7 @@ class OvnNorthbound(ovn.OvnScenario):
                             port_bind_args = None,
                             create_acls = True):
         lswitches = self.context["datapaths"]["lswitches"]
-        daemon = self.context["datapaths"]["nbctl_daemon_mode"]
+        daemon = lport_create_args.get("daemon", False)
 
         iteration = self.context["iteration"]
         lswitch = lswitches[iteration % len(lswitches)]
@@ -107,10 +107,10 @@ class OvnNorthbound(ovn.OvnScenario):
                                 create_acls = True):
         naddress_set = test_args.get("naddress", 10)
         prefix_len = test_args.get("prefixlen", 24)
+        daemon = lport_create_args.get("daemon", False)
 
         iteration = self.context["iteration"]
-        lswitches = self.context["ovn_nb"]["lswitches"]
-        daemon = self.context["ovn_nb"]["nbctl_daemon_mode"]
+        lswitches = self.context["ovn-nb"]
 
         addr_set_index = iteration % naddress_set
 
