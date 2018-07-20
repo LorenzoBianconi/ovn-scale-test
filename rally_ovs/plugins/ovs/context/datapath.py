@@ -77,8 +77,10 @@ class Datapath(ovnclients.OvnClientMixin, context.Context):
 
         nbctl_daemon_mode = self.config["nbctl_daemon_mode"]
         if nbctl_daemon_mode:
-            self._run_daemon()
-            self._set_daemon_mode(True)
+            self._start_daemon()
+        else:
+            self._stop_daemon()
+        self._set_daemon_mode(nbctl_daemon_mode)
 
         routers = []
         if router_create_args["amount"]:

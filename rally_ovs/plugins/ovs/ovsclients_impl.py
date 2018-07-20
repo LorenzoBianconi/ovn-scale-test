@@ -231,12 +231,12 @@ class OvnNbctl(OvsClient):
             self.run("sync", opts)
             self.batch_mode = batch_mode
 
-        def run_daemon(self, val = True):
-            if val:
-                opts = ["--detach",  "--pidfile", "--log-file"]
-                self.run("", opts=opts, quit_on_error=False)
-            else:
-                self.run("exit")
+        def start_daemon(self):
+            opts = ["--detach",  "--pidfile", "--log-file"]
+            self.run("", opts=opts, quit_on_error=False)
+
+        def stop_daemon(self):
+            self.run("exit")
 
     def create_client(self):
         print "*********   call OvnNbctl.create_client"
