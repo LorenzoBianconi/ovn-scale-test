@@ -233,7 +233,7 @@ class OvnNbctl(OvsClient):
 
         def run_daemon(self, val = True):
             if val:
-                opts = ["--detach",  "--pidfile"]
+                opts = ["--detach",  "--pidfile", "--log-file"]
                 self.run("", opts=opts, quit_on_error=False)
             else:
                 self.run("exit")
