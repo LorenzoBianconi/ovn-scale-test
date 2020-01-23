@@ -264,6 +264,17 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         LOG.info("Create Logical routers")
         return super(OvnScenario, self)._create_routers(router_create_args)
 
+    @atomic.action_timer("ovn_network.delete_routers")
+    def _delete_routers(self):
+        LOG.info("Delete Logical routers")
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method,
+                              self.context['controller']['host_container'])
+        ovn_nbctl.enable_batch_mode(False)
+        ovn_nbctl.set_daemon_socket(self.context.get("daemon_socket", None))
+        for lrouter in ovn_nbctl.lrouter_list():
+            ovn_nbctl.lrouter_del(lrouter["name"])
+
     @atomic.action_timer("ovn_network.connect_network_to_router")
     def _connect_networks_to_routers(self, lnetworks, lrouters, networks_per_router):
         super(OvnScenario, self)._connect_networks_to_routers(lnetworks,

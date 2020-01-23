@@ -19,7 +19,6 @@ from io import StringIO
 from rally_ovs.plugins.ovs.ovsclients import *
 from rally_ovs.plugins.ovs.utils import get_ssh_from_credential
 
-
 @configure("ssh")
 class SshClient(OvsClient):
 
@@ -158,6 +157,16 @@ class OvnNbctl(OvsClient):
             self.run("ls-list", stdout=stdout)
             output = stdout.getvalue()
             return parse_lswitch_list(output)
+
+        def lrouter_list(self):
+            stdout = StringIO()
+            self.run("lr-list", stdout=stdout)
+            output = stdout.getvalue()
+            return parse_lswitch_list(output)
+
+        def lrouter_del(self, name):
+            params = [name]
+            self.run("lr-del", args=params)
 
         def lswitch_port_add(self, lswitch, name, mac='', ip=''):
             params =[lswitch, name]

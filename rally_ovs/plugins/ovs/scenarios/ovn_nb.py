@@ -23,6 +23,17 @@ class OvnNorthbound(ovn.OvnScenario):
     """Benchmark scenarios for OVN northbound."""
 
     @scenario.configure(context={})
+    def cleanup_routed_lswitches(self):
+        sandboxes = self.context.get("sandboxes", [])
+        for sandbox in sandboxes:
+            self._flush_ovs_internal_ports(sandbox)
+        lswitches = self.context.get("ovn-nb", [])
+        self._delete_lswitch(lswitches)
+        self._delete_routers()
+        for address_set in self._list_address_set():
+            self._remove_address_set(address_set)
+
+    @scenario.configure(context={})
     def create_and_list_lswitches(self, lswitch_create_args=None):
         self._create_lswitches(lswitch_create_args)
         self._list_lswitches()
