@@ -20,6 +20,7 @@ from rally_ovs.plugins.ovs import ovnclients
 from rally_ovs.plugins.ovs import utils
 import random
 import netaddr
+from io import StringIO
 
 LOG = logging.getLogger(__name__)
 
@@ -530,6 +531,17 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                               self.context['controller']['host_container'])
         ovn_nbctl.remove("Address_Set", name, ('addresses', ' ', addr_list))
         ovn_nbctl.flush()
+
+    def _list_address_set(self):
+        stdout = StringIO()
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method,
+                              self.context['controller']['host_container'])
+        ovn_nbctl.set_daemon_socket(self.context.get("daemon_socket", None))
+        ovn_nbctl.run("list address_set", ["--bare", "--columns", "name"], stdout=stdout)
+        ovn_nbctl.flush()
+        output = stdout.getvalue()
+        return output.splitlines()
 
     def _remove_address_set(self, set_name):
         LOG.info("remove %s address_set" % set_name)
