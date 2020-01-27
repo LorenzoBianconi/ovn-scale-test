@@ -458,7 +458,7 @@ class OvsVsctl(OvsClient):
             self.install_method = install_method
             self.host_container = host_container
 
-        def run(self, cmd, opts=[], args=[], extras=[]):
+        def run(self, cmd, opts=[], args=[], extras=[], stdout=sys.stdout, stderr=sys.stderr):
             self.cmds = self.cmds or []
 
             # TODO: tested with non batch_mode only for docker
@@ -485,8 +485,7 @@ class OvsVsctl(OvsClient):
             if self.batch_mode:
                 return
 
-            self.ssh.run("\n".join(self.cmds),
-                         stdout=sys.stdout, stderr=sys.stderr)
+            self.ssh.run("\n".join(self.cmds), stdout=stdout, stderr=stderr)
 
             self.cmds = None
 
