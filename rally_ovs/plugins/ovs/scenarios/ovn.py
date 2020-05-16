@@ -801,3 +801,35 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         retval = ovn_nbctl.get("Address_Set", set_name, 'addresses')
         ovn_nbctl.close()
         return retval
+
+    def runCmd(self, ssh, cmd="perf record", process="ovn-controller"):
+        req_pid = "perf" if cmd == "stop" else process
+        ssh.enable_batch_mode(False)
+        stdout = StringIO()
+        ssh.run("pidof -s %s" % req_pid, stdout=stdout)
+        pid = stdout.getvalue().rstrip()
+
+        if (cmd == "stop"):
+            cmd = "kill %s" % pid
+        else:
+            cmd = cmd + " -p %s &" % pid
+
+        ssh.enable_batch_mode(False)
+        ssh.run(cmd, stdout=None)
+
+    def runFarmCmd(self, sandbox, cmd="perf record"):
+        LOG.info("running %s on %s" % (cmd, sandbox["name"]))
+
+        ssh = self.farm_clients(sandbox["farm"], "ovs-ssh")
+        ssh.set_sandbox(sandbox["name"], self.install_method,
+                        sandbox["host_container"])
+        self.runCmd(ssh, cmd, "ovn-controller")
+
+    def runControllerCmd(self, cmd="perf record"):
+        LOG.info("running %s on controller-sandbox" % cmd)
+
+        ssh = self.controller_client("ovs-ssh")
+        ssh.set_sandbox("controller-sandbox", self.install_method,
+                        self.context["controller"]["host_container"])
+        self.runCmd(ssh, cmd, "ovn-northd")
+

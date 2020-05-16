@@ -229,6 +229,32 @@
             ]
         },
         {
+            "title": "Run PerfTest",
+            "run_in_parallel": true,
+            "workloads": [
+                {
+                    "name": "OvnNorthbound.handle_cmd",
+                    "args": {
+                        "cmd_args": {
+                            "size" : {{farm_nodes}},
+                            "cmd" : "perf record -g -e cpu-cycles -F 99 -o ovn-perf.data"
+                        }
+                    },
+                    "runner": {
+                        "type": "serial",
+                        "times": 1
+                    },
+                    "context": {
+                       "sandbox": {"tag": "ToR1"},
+                       "ovn_multihost" : {
+                            "controller": "ovn-controller-node"
+                       },
+                       "ovn_nb": {}
+                    }
+                }
+            ]
+        },
+        {
             "title": "Create switch-per-node scenario (add pods workload)",
             "run_in_parallel": true,
             "workloads": [
@@ -269,6 +295,32 @@
                             "cert": "/opt/ovn/ovn-cert.pem",
                             "cacert": "/opt/ovn/pki/switchca/cacert.pem"
                        }
+                    }
+                }
+            ]
+        },
+        {
+            "title": "Stop PerfTest",
+            "run_in_parallel": true,
+            "workloads": [
+                {
+                    "name": "OvnNorthbound.handle_cmd",
+                    "args": {
+                        "cmd_args": {
+                            "size" : {{farm_nodes}},
+                            "cmd" : "stop"
+                        }
+                    },
+                    "runner": {
+                        "type": "serial",
+                        "times": 1
+                    },
+                    "context": {
+                       "sandbox": {"tag": "ToR1"},
+                       "ovn_multihost" : {
+                            "controller": "ovn-controller-node"
+                       },
+                       "ovn_nb": {}
                     }
                 }
             ]

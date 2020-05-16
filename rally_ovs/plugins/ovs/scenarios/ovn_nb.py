@@ -240,6 +240,17 @@ class OvnNorthbound(ovn.OvnScenario):
                                     name_space_size, network_policy_size,
                                     create_acls)
 
+    @scenario.configure()
+    def handle_cmd(self, cmd_args = {}):
+        sandbox_size = cmd_args.get("size", 0)
+        cmd = cmd_args.get("cmd", "perf record")
+
+        self.runControllerCmd(cmd)
+
+        sandboxes = self.context.get("sandboxes", [])
+        for i in range(sandbox_size):
+            self.runFarmCmd(sandboxes[i], cmd)
+
     @scenario.configure(context={})
     def cleanup_routed_lswitches(self):
         sandboxes = self.context.get("sandboxes", [])
