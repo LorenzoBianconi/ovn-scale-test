@@ -364,12 +364,12 @@ class OvnNorthboundFakeMultinode(OvnFakeMultinode):
         super(OvnNorthboundFakeMultinode, self).__init__(context)
 
     @scenario.configure(context={})
-    def setup_switch_per_node(self, fake_multinode_args = {},
-                              lswitch_create_args = {},
-                              lnetwork_create_args = {},
-                              lport_create_args = {},
-                              port_bind_args = {},
-                              create_mgmt_port = True):
+    def _setup_switch_per_node(self, fake_multinode_args = {},
+                               lswitch_create_args = {},
+                               lnetwork_create_args = {},
+                               lport_create_args = {},
+                               port_bind_args = {},
+                               create_mgmt_port = True):
         self.add_chassis_nodes(fake_multinode_args)
         self.connect_chassis_nodes(fake_multinode_args)
         self.wait_chassis_nodes(fake_multinode_args)
@@ -386,3 +386,21 @@ class OvnNorthboundFakeMultinode(OvnFakeMultinode):
                                     lport_create_args=lport_create_args,
                                     port_bind_args=port_bind_args,
                                     create_mgmt_port=create_mgmt_port)
+
+    @scenario.configure(context={})
+    def setup_switch_per_node(self, fake_multinode_args = {},
+                              lswitch_create_args = {},
+                              lnetwork_create_args = {},
+                              lport_create_args = {},
+                              port_bind_args = {},
+                              create_mgmt_port = True):
+
+        num_iterations = fake_multinode_args.get("num_iterations", 1)
+        for i in range(num_iterations):
+            self._setup_switch_per_node(fake_multinode_args,
+                                        lswitch_create_args,
+                                        lnetwork_create_args,
+                                        lport_create_args,
+                                        port_bind_args,
+                                        create_mgmt_port):
+
