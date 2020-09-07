@@ -175,6 +175,7 @@
                             "ovn_monitor_all": {{ovn_monitor_all}},
                             "ovn_cluster_db": {{ovn_cluster_db}},
                             "max_timeout_s": 10,
+                            "num_iterations": {{farm_nodes // node_batch_size}},
                             "batch_size": {{node_batch_size}}
                         },
                         "lswitch_create_args": {
@@ -200,7 +201,7 @@
                     },
                     "runner": {
                         "type": "serial",
-                        "times": {{farm_nodes // node_batch_size}}
+                        "times": 1
                     },
                     "sla": {
                         "max_seconds_per_iteration": {{sla}}

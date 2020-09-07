@@ -352,9 +352,9 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                                lnetwork_create_args = {},
                                lport_create_args = {},
                                port_bind_args = {},
-                               create_mgmt_port = True):
+                               create_mgmt_port = True,
+                               iteration = 1):
         lrouters = self.context["datapaths"]["routers"]
-        iteration = self.context["iteration"]
         sandboxes = self.context["sandboxes"]
 
         lswitch_args = copy.copy(lswitch_create_args)

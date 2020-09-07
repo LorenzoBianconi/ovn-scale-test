@@ -15,8 +15,11 @@
 from rally_ovs.plugins.ovs.scenarios import ovn
 from rally.task import atomic
 from rally.task import scenario
+from rally.common import logging
 import time
 import netaddr
+
+LOG = logging.getLogger(__name__)
 
 """Scenario to dynamically add/delete ovn nodes running in containers.
 
@@ -234,8 +237,8 @@ class OvnFakeMultinode(ovn.OvnScenario):
 
     @scenario.configure(context={})
     @atomic.action_timer("OvnFakeMultinode.add_chassis_nodes")
-    def add_chassis_nodes(self, fake_multinode_args = {}):
-        iteration = self.context["iteration"]
+    def add_chassis_nodes(self, fake_multinode_args = {},
+                          iteration = 1):
         batch_size = fake_multinode_args.get("batch_size", 1)
         node_prefix = fake_multinode_args.get("node_prefix", "")
 
@@ -261,8 +264,8 @@ class OvnFakeMultinode(ovn.OvnScenario):
 
     @scenario.configure(context={})
     @atomic.action_timer("OvnFakeMultinode.connect_chassis_nodes")
-    def connect_chassis_nodes(self, fake_multinode_args = {}):
-        iteration = self.context["iteration"]
+    def connect_chassis_nodes(self, fake_multinode_args = {},
+                              iteration = 1):
         batch_size = fake_multinode_args.get("batch_size", 1)
         node_prefix = fake_multinode_args.get("node_prefix", "")
 
@@ -283,8 +286,8 @@ class OvnFakeMultinode(ovn.OvnScenario):
 
     @scenario.configure(context={})
     @atomic.action_timer("ovnFakeMultinode.wait_chassis_nodes")
-    def wait_chassis_nodes(self, fake_multinode_args = {}):
-        iteration = self.context["iteration"]
+    def wait_chassis_nodes(self, fake_multinode_args = {},
+                           iteration = 1):
         batch_size = fake_multinode_args.get("batch_size", 1)
         node_prefix = fake_multinode_args.get("node_prefix", "")
         max_timeout_s = fake_multinode_args.get("max_timeout_s")
@@ -324,8 +327,8 @@ class OvnFakeMultinode(ovn.OvnScenario):
 
     @scenario.configure(context={})
     @atomic.action_timer("OvnFakeMultinode.add_chassis_nodes_localnet")
-    def add_chassis_nodes_localnet(self, fake_multinode_args = {}):
-        iteration = self.context["iteration"]
+    def add_chassis_nodes_localnet(self, fake_multinode_args = {},
+                                   iteration = 1):
         batch_size = fake_multinode_args.get("batch_size", 1)
         node_prefix = fake_multinode_args.get("node_prefix", "")
         physnet = fake_multinode_args.get("physnet", "providernet")
@@ -342,8 +345,8 @@ class OvnFakeMultinode(ovn.OvnScenario):
     @scenario.configure(context={})
     @atomic.action_timer("OvnFakeMultinode.add_chassis_external_hosts")
     def add_chassis_external_hosts(self, fake_multinode_args = {},
-                                   lnetwork_create_args = {}):
-        iteration = self.context["iteration"]
+                                   lnetwork_create_args = {},
+                                   iteration = 1):
         batch_size = fake_multinode_args.get("batch_size", 1)
         node_prefix = fake_multinode_args.get("node_prefix", "")
 
@@ -364,20 +367,23 @@ class OvnNorthboundFakeMultinode(OvnFakeMultinode):
         super(OvnNorthboundFakeMultinode, self).__init__(context)
 
     @scenario.configure(context={})
-    def setup_switch_per_node(self, fake_multinode_args = {},
-                              lswitch_create_args = {},
-                              lnetwork_create_args = {},
-                              lport_create_args = {},
-                              port_bind_args = {},
-                              create_mgmt_port = True):
-        self.add_chassis_nodes(fake_multinode_args)
-        self.connect_chassis_nodes(fake_multinode_args)
-        self.wait_chassis_nodes(fake_multinode_args)
+    def _setup_switch_per_node(self, fake_multinode_args = {},
+                               lswitch_create_args = {},
+                               lnetwork_create_args = {},
+                               lport_create_args = {},
+                               port_bind_args = {},
+                               create_mgmt_port = True,
+                               iteration = 1):
+        LOG.info("_setup_switch_per_node iteration %d" % iteration)
+
+        self.add_chassis_nodes(fake_multinode_args, iteration)
+        self.connect_chassis_nodes(fake_multinode_args, iteration)
+        self.wait_chassis_nodes(fake_multinode_args, iteration)
 
         if lnetwork_create_args.get('gw_router_per_network', False):
-            self.add_chassis_nodes_localnet(fake_multinode_args)
+            self.add_chassis_nodes_localnet(fake_multinode_args, iteration)
             self.add_chassis_external_hosts(fake_multinode_args,
-                                            lnetwork_create_args)
+                                            lnetwork_create_args, iteration)
 
         lswitch_create_args['amount'] = fake_multinode_args.get('batch_size', 1)
         lswitch_create_args['batch'] = 1
@@ -385,4 +391,21 @@ class OvnNorthboundFakeMultinode(OvnFakeMultinode):
                                     lnetwork_create_args=lnetwork_create_args,
                                     lport_create_args=lport_create_args,
                                     port_bind_args=port_bind_args,
-                                    create_mgmt_port=create_mgmt_port)
+                                    create_mgmt_port=create_mgmt_port,
+                                    iteration=iteration)
+
+    @scenario.configure(context={})
+    def setup_switch_per_node(self, fake_multinode_args = {},
+                              lswitch_create_args = {},
+                              lnetwork_create_args = {},
+                              lport_create_args = {},
+                              port_bind_args = {},
+                              create_mgmt_port = True):
+        num_iterations = fake_multinode_args.get("num_iterations", 1)
+        for i in range(num_iterations):
+            self._setup_switch_per_node(fake_multinode_args,
+                                  lswitch_create_args,
+                                  lnetwork_create_args,
+                                  lport_create_args,
+                                  port_bind_args,
+                                  create_mgmt_port, i)

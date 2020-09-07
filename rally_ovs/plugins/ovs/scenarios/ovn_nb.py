@@ -35,7 +35,8 @@ class OvnNorthbound(ovn.OvnScenario):
                                     lnetwork_create_args,
                                     lport_create_args,
                                     port_bind_args,
-                                    create_mgmt_port)
+                                    create_mgmt_port,
+                                    self.context["iteration"])
 
     @atomic.action_timer("ovn.create_or_update_network_policy_address_sets")
     def create_or_update_network_policy_address_sets(self, name, ipaddr,
